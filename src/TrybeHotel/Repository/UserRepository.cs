@@ -1,5 +1,6 @@
 using TrybeHotel.Models;
 using TrybeHotel.Dto;
+using Microsoft.EntityFrameworkCore;
 
 namespace TrybeHotel.Repository
 {
@@ -10,28 +11,64 @@ namespace TrybeHotel.Repository
         {
             _context = context;
         }
-        public UserDto GetUserById(int userId)
+        public UserDto? GetUserById(int userId)
         {
-            throw new NotImplementedException();
+            return _context.Users.Where(u => u.UserId == userId).Select(u => new UserDto {
+                UserId = u.UserId,
+                Name = u.Name,
+                Email = u.Email,
+                UserType = u.UserType
+            }).FirstOrDefault();
         }
 
-        public UserDto Login(LoginDto login)
+        public UserDto? Login(LoginDto login)
         {
-            throw new NotImplementedException();
+           var user = GetUserByEmail(login.Email);
+           if (user == null) return null;
+           var password = _context.Users.Where(u => u.UserId == user.UserId).First().Password;
+           if (login.Password != password) return null;
+           return user;
         }
-        public UserDto Add(UserDtoInsert user)
+        public UserDto? Add(UserDtoInsert user)
         {
-            throw new NotImplementedException();
+            if (GetUserByEmail(user.Email) != null) return null;
+            var newUser = new User
+            {
+                Name = user.Name,
+                Email = user.Email,
+                Password = user.Password,
+                UserType = "client"
+            };
+            _context.Users.Add(newUser);
+            _context.SaveChanges();
+            return new UserDto
+            {
+                UserId = newUser.UserId,
+                Name = newUser.Name,
+                Email = newUser.Email,
+                UserType = newUser.UserType
+            };
+
         }
 
-        public UserDto GetUserByEmail(string userEmail)
+        public UserDto? GetUserByEmail(string userEmail)
         {
-             throw new NotImplementedException();
+            return _context.Users.Where(u => u.Email == userEmail).Select(u => new UserDto {
+                UserId = u.UserId,
+                Name = u.Name,
+                Email = u.Email,
+                UserType = u.UserType
+            }).FirstOrDefault();
         }
 
         public IEnumerable<UserDto> GetUsers()
         {
-            throw new NotImplementedException();
+           return _context.Users.Select(u => new UserDto {
+               UserId = u.UserId,
+               Name = u.Name,
+               Email = u.Email,
+               UserType = u.UserType
+           }).ToList();
         }
 
     }
